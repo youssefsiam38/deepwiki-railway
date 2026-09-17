@@ -11,7 +11,7 @@ and spends **your** LLM keys) reachable by anyone who finds the URL. This templa
 behind a password**: a Caddy front-door adds HTTP basic authentication over everything and routes the browser's
 API and WebSocket calls correctly, so a single Railway domain just works.
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/deepwiki)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/deepwiki-open)
 
 ## What you get
 
