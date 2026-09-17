@@ -1,0 +1,41 @@
+# Single public front-door for DeepWiki-Open on Railway.
+#
+# Adds HTTP basic authentication over everything except the health check, and routes the browser's direct API
+# and WebSocket calls to the FastAPI backend (:8001); everything else goes to Next.js (:3000), which server-side
+# proxies its own /api/* to the backend. WebSocket upgrades are handled transparently by reverse_proxy. Once the
+# browser has authenticated to this origin, it attaches the cached basic-auth credentials to same-origin
+# WebSocket handshakes, so /ws/* works behind the same gate as the UI.
+{
+	admin off
+	auto_https off
+	persist_config off
+}
+
+:{$PORT:8080} {
+	# Railway's health check hits the public domain with no credentials; keep it open and cheap.
+	handle /health {
+		reverse_proxy 127.0.0.1:8001
+	}
+
+	handle {
+		basic_auth {
+			{$OWNER_USERNAME:owner} {$CADDY_PASSWORD_HASH}
+		}
+
+		# Paths the browser calls directly on the backend (WebSocket chat/codemap, and the codemap file API).
+		@backend path /ws/* /codemap/*
+		handle @backend {
+			reverse_proxy 127.0.0.1:8001
+		}
+
+		# Everything else: the Next.js app (its own server-side rewrites reach the backend internally).
+		handle {
+			reverse_proxy 127.0.0.1:3000
+		}
+	}
+
+	encode gzip
+	request_body {
+		max_size 100MB
+	}
+}
